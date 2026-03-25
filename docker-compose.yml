@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # MongoDB database
+  mongodb:
+    image: mongo:7
+    container_name: soma-ai-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: soma_ai
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - soma-network
+
+  # SOMA.AI Application
+  app:
+    build: .
+    container_name: soma-ai-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URI=mongodb://admin:admin123@mongodb:27017/soma_ai?authSource=admin
+      - MONGODB_DB_NAME=soma_ai
+      - UPLOAD_DIR=uploads
+      - OUTPUT_DIR=outputs
+      - ENVIRONMENT=production
+    volumes:
+      - app_uploads:/app/uploads
+      - app_outputs:/app/outputs
+    depends_on:
+      - mongodb
+    networks:
+      - soma-network
+
+volumes:
+  mongo_data:
+  app_uploads:
+  app_outputs:
+
+networks:
+  soma-network:
+    driver: bridge
